@@ -15,6 +15,10 @@ app.action("open_form", async ({ ack, body, client }) => {
     view: {
       type: "modal",
       callback_id: "form_submission",
+      private_metadata: JSON.stringify({
+        channel_id: body.channel.id,
+        message_ts: body.message.ts
+      }),
       title: { type: "plain_text", text: "New Config Request" },
       submit: { type: "plain_text", text: "Submit" },
       close: { type: "plain_text", text: "Cancel" },
@@ -107,6 +111,8 @@ app.action("open_form", async ({ ack, body, client }) => {
 app.view("form_submission", async ({ ack, body, view, client }) => {
   await ack();
 
+  const { channel_id, message_ts } = JSON.parse(view.private_metadata);
+
   const v = view.state.values;
   const submission = {
     restaurant_name:    v.restaurant_name.value.value,
@@ -120,7 +126,7 @@ app.view("form_submission", async ({ ack, body, view, client }) => {
 
   const submittedBy = body.user.id;
 
-  await client.chat.postMessage({
+  const result = await client.chat.postMessage({
     channel: "team-config",
     text: "New Config Request",
     blocks: [
@@ -156,6 +162,12 @@ app.view("form_submission", async ({ ack, body, view, client }) => {
         ]
       }
     ]
+  });
+
+  await client.chat.postMessage({
+    channel: channel_id,
+    thread_ts: message_ts,
+    text: `✅ <@${submittedBy}> your config request has been submitted and is being reviewed by Config Team.`
   });
 });
 
