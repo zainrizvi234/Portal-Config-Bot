@@ -5,6 +5,9 @@ const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
   appToken: process.env.SLACK_APP_TOKEN,
   socketMode: true,
+  clientOptions: {
+    slackApiUrl: "https://slack.com/api/",
+  },
 });
 
 app.action("open_form", async ({ ack, body, client }) => {
