@@ -179,4 +179,12 @@ app.view("form_submission", async ({ ack, body, view, client }) => {
 (async () => {
   await app.start();
   console.log("App is running");
+
+  process.on("uncaughtException", (err) => {
+    console.error("Uncaught exception:", err);
+  });
+
+  process.on("unhandledRejection", (err) => {
+    console.error("Unhandled rejection:", err);
+  });
 })();
