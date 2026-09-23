@@ -10,6 +10,8 @@ const app = new App({
 app.action("open_form", async ({ ack, body, client }) => {
   await ack();
 
+  console.log(JSON.stringify(body, null, 2));
+  
   await client.views.open({
     trigger_id: body.trigger_id,
     view: {
