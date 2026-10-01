@@ -161,6 +161,11 @@ app.view("form_submission", async ({ ack, body, view, client }) => {
         text: { type: "mrkdwn", text: `*Additional Details*\n${submission.additional_details}` }
       }] : []),
       {
+      { 
+        type: "section",
+        text: { type: "mrkdwn", text: `*Original Message*\n<${permalink}|View in Slack>` }
+      },
+      {
         type: "context",
         elements: [
           { type: "mrkdwn", text: `Submitted by <@${submittedBy}>` }
@@ -168,6 +173,12 @@ app.view("form_submission", async ({ ack, body, view, client }) => {
       }
     ]
   });
+
+  const permalinkResult = await client.chat.getPermalink({
+  channel: channel_id,
+  message_ts: message_ts
+});
+const permalink = permalinkResult.permalink;
 
   await client.chat.postMessage({
     channel: channel_id,
