@@ -118,6 +118,13 @@ app.view("form_submission", async ({ ack, body, view, client }) => {
 
   const { channel_id, message_ts } = JSON.parse(view.private_metadata);
 
+  const permalinkResult = await client.chat.getPermalink({
+  channel: channel_id,
+  message_ts: message_ts
+});
+console.log("Permalink result:", JSON.stringify(permalinkResult, null, 2));
+const permalink = permalinkResult.permalink;
+
   const v = view.state.values;
   const submission = {
     restaurant_name:    v.restaurant_name.value.value,
