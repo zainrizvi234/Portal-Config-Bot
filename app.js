@@ -22,7 +22,7 @@ app.action("open_form", async ({ ack, body, client }) => {
       callback_id: "form_submission",
       private_metadata: JSON.stringify({
         channel_id: body.container.channel_id,
-        message_ts: body.container.message_ts
+        message_ts: body.message.thread_ts
       }),
       title: { type: "plain_text", text: "New Config Request" },
       submit: { type: "plain_text", text: "Submit" },
