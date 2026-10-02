@@ -14,7 +14,7 @@ app.action("open_form", async ({ ack, body, client }) => {
   await ack();
 
   console.log(JSON.stringify(body, null, 2));
-  
+
   await client.views.open({
     trigger_id: body.trigger_id,
     view: {
@@ -119,11 +119,11 @@ app.view("form_submission", async ({ ack, body, view, client }) => {
   const { channel_id, message_ts } = JSON.parse(view.private_metadata);
 
   const permalinkResult = await client.chat.getPermalink({
-  channel: channel_id,
-  message_ts: message_ts
-});
-console.log("Permalink result:", JSON.stringify(permalinkResult, null, 2));
-const permalink = permalinkResult.permalink;
+    channel: channel_id,
+    message_ts: message_ts
+  });
+  console.log("Permalink result:", JSON.stringify(permalinkResult, null, 2));
+  const permalink = permalinkResult.permalink;
 
   const v = view.state.values;
   const submission = {
@@ -138,7 +138,7 @@ const permalink = permalinkResult.permalink;
 
   const submittedBy = body.user.id;
 
-  const result = await client.chat.postMessage({
+  await client.chat.postMessage({
     channel: "team-config",
     text: "New Config Request",
     blocks: [
@@ -168,7 +168,6 @@ const permalink = permalinkResult.permalink;
         text: { type: "mrkdwn", text: `*Additional Details*\n${submission.additional_details}` }
       }] : []),
       {
-      { 
         type: "section",
         text: { type: "mrkdwn", text: `*Original Message*\n<${permalink}|View in Slack>` }
       },
@@ -181,16 +180,10 @@ const permalink = permalinkResult.permalink;
     ]
   });
 
-  const permalinkResult = await client.chat.getPermalink({
-  channel: channel_id,
-  message_ts: message_ts
-});
-const permalink = permalinkResult.permalink;
-
   await client.chat.postMessage({
     channel: channel_id,
     thread_ts: message_ts,
-    text: `✅ <@${submittedBy}> your config request has been submitted and is being reviewed by Config Team.`
+    text: `✅ <@${submittedBy}> your config request has been submitted and is being reviewed.`
   });
 });
 
