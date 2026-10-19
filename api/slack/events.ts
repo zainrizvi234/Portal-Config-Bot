@@ -1,19 +1,18 @@
-require("dotenv").config();
-const { App } = require("@slack/bolt");
+// @ts-nocheck
+import { App } from "@slack/bolt";
+import { VercelReceiver, createHandler } from "@vercel/slack-bolt";
+
+const receiver = new VercelReceiver();
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
-  appToken: process.env.SLACK_APP_TOKEN,
-  socketMode: true,
-  clientOptions: {
-    slackApiUrl: "https://slack.com/api/",
-  },
+  signingSecret: process.env.SLACK_SIGNING_SECRET,
+  receiver,
+  deferInitialization: true,
 });
 
 app.action("open_form", async ({ ack, body, client }) => {
   await ack();
-
-  console.log(JSON.stringify(body, null, 2));
 
   await client.views.open({
     trigger_id: body.trigger_id,
@@ -22,7 +21,7 @@ app.action("open_form", async ({ ack, body, client }) => {
       callback_id: "form_submission",
       private_metadata: JSON.stringify({
         channel_id: body.container.channel_id,
-        message_ts: body.message.thread_ts
+        message_ts: body.message.thread_ts,
       }),
       title: { type: "plain_text", text: "New Config Request" },
       submit: { type: "plain_text", text: "Submit" },
@@ -35,8 +34,8 @@ app.action("open_form", async ({ ack, body, client }) => {
           element: {
             type: "plain_text_input",
             action_id: "value",
-            placeholder: { type: "plain_text", text: "e.g. Burger Palace Dublin" }
-          }
+            placeholder: { type: "plain_text", text: "e.g. Burger Palace Dublin" },
+          },
         },
         {
           type: "input",
@@ -45,8 +44,8 @@ app.action("open_form", async ({ ack, body, client }) => {
           element: {
             type: "plain_text_input",
             action_id: "value",
-            placeholder: { type: "plain_text", text: "e.g. 12345" }
-          }
+            placeholder: { type: "plain_text", text: "e.g. 12345" },
+          },
         },
         {
           type: "input",
@@ -55,8 +54,8 @@ app.action("open_form", async ({ ack, body, client }) => {
           element: {
             type: "plain_text_input",
             action_id: "value",
-            placeholder: { type: "plain_text", text: "https://..." }
-          }
+            placeholder: { type: "plain_text", text: "https://..." },
+          },
         },
         {
           type: "input",
@@ -66,8 +65,8 @@ app.action("open_form", async ({ ack, body, client }) => {
             type: "plain_text_input",
             action_id: "value",
             multiline: true,
-            placeholder: { type: "plain_text", text: "Describe the config request..." }
-          }
+            placeholder: { type: "plain_text", text: "Describe the config request..." },
+          },
         },
         {
           type: "input",
@@ -78,12 +77,12 @@ app.action("open_form", async ({ ack, body, client }) => {
             action_id: "value",
             placeholder: { type: "plain_text", text: "Select priority" },
             options: [
-              { text: { type: "plain_text", text: "Low" },    value: "low" },
+              { text: { type: "plain_text", text: "Low" }, value: "low" },
               { text: { type: "plain_text", text: "Medium" }, value: "medium" },
-              { text: { type: "plain_text", text: "High" },   value: "high" },
-              { text: { type: "plain_text", text: "Urgent" }, value: "urgent" }
-            ]
-          }
+              { text: { type: "plain_text", text: "High" }, value: "high" },
+              { text: { type: "plain_text", text: "Urgent" }, value: "urgent" },
+            ],
+          },
         },
         {
           type: "input",
@@ -93,8 +92,8 @@ app.action("open_form", async ({ ack, body, client }) => {
           element: {
             type: "plain_text_input",
             action_id: "value",
-            placeholder: { type: "plain_text", text: "Paste a link to screenshots or files (optional)" }
-          }
+            placeholder: { type: "plain_text", text: "Paste a link to screenshots or files (optional)" },
+          },
         },
         {
           type: "input",
@@ -105,11 +104,11 @@ app.action("open_form", async ({ ack, body, client }) => {
             type: "plain_text_input",
             action_id: "value",
             multiline: true,
-            placeholder: { type: "plain_text", text: "Anything else to add? (optional)" }
-          }
-        }
-      ]
-    }
+            placeholder: { type: "plain_text", text: "Anything else to add? (optional)" },
+          },
+        },
+      ],
+    },
   });
 });
 
@@ -120,19 +119,18 @@ app.view("form_submission", async ({ ack, body, view, client }) => {
 
   const permalinkResult = await client.chat.getPermalink({
     channel: channel_id,
-    message_ts: message_ts
+    message_ts: message_ts,
   });
-  console.log("Permalink result:", JSON.stringify(permalinkResult, null, 2));
   const permalink = permalinkResult.permalink;
 
   const v = view.state.values;
   const submission = {
-    restaurant_name:    v.restaurant_name.value.value,
-    brand_id:           v.brand_id.value.value,
-    portal_link:        v.portal_link.value.value,
-    description:        v.description.value.value,
-    priority:           v.priority.value.selected_option.value,
-    screenshots:        v.screenshots.value.value || null,
+    restaurant_name: v.restaurant_name.value.value,
+    brand_id: v.brand_id.value.value,
+    portal_link: v.portal_link.value.value,
+    description: v.description.value.value,
+    priority: v.priority.value.selected_option.value,
+    screenshots: v.screenshots.value.value || null,
     additional_details: v.additional_details.value.value || null,
   };
 
@@ -144,7 +142,7 @@ app.view("form_submission", async ({ ack, body, view, client }) => {
     blocks: [
       {
         type: "header",
-        text: { type: "plain_text", text: "New Config Request" }
+        text: { type: "plain_text", text: "New Config Request" },
       },
       {
         type: "section",
@@ -153,49 +151,40 @@ app.view("form_submission", async ({ ack, body, view, client }) => {
           { type: "mrkdwn", text: `*Brand ID*\n${submission.brand_id}` },
           { type: "mrkdwn", text: `*Priority*\n${submission.priority}` },
           { type: "mrkdwn", text: `*Portal Link*\n${submission.portal_link}` },
-        ]
+        ],
       },
       {
         type: "section",
-        text: { type: "mrkdwn", text: `*Description / Request*\n${submission.description}` }
+        text: { type: "mrkdwn", text: `*Description / Request*\n${submission.description}` },
       },
-      ...(submission.screenshots ? [{
-        type: "section",
-        text: { type: "mrkdwn", text: `*Screenshots / Files*\n${submission.screenshots}` }
-      }] : []),
-      ...(submission.additional_details ? [{
-        type: "section",
-        text: { type: "mrkdwn", text: `*Additional Details*\n${submission.additional_details}` }
-      }] : []),
+      ...(submission.screenshots
+        ? [{
+            type: "section",
+            text: { type: "mrkdwn", text: `*Screenshots / Files*\n${submission.screenshots}` },
+          }]
+        : []),
+      ...(submission.additional_details
+        ? [{
+            type: "section",
+            text: { type: "mrkdwn", text: `*Additional Details*\n${submission.additional_details}` },
+          }]
+        : []),
       {
         type: "section",
-        text: { type: "mrkdwn", text: `*Original Message*\n<${permalink}|View in Slack>` }
+        text: { type: "mrkdwn", text: `*Original Message*\n<${permalink}|View in Slack>` },
       },
       {
         type: "context",
-        elements: [
-          { type: "mrkdwn", text: `Submitted by <@${submittedBy}>` }
-        ]
-      }
-    ]
+        elements: [{ type: "mrkdwn", text: `Submitted by <@${submittedBy}>` }],
+      },
+    ],
   });
 
   await client.chat.postMessage({
     channel: channel_id,
     thread_ts: message_ts,
-    text: `✅ <@${submittedBy}> your config request has been submitted and is being reviewed.`
+    text: `✅ <@${submittedBy}> your config request has been submitted and is being reviewed.`,
   });
 });
 
-(async () => {
-  await app.start();
-  console.log("App is running");
-
-  process.on("uncaughtException", (err) => {
-    console.error("Uncaught exception:", err);
-  });
-
-  process.on("unhandledRejection", (err) => {
-    console.error("Unhandled rejection:", err);
-  });
-})();
+export const POST = createHandler(app, receiver);
